@@ -7,15 +7,19 @@
 #define dsDrawCylinder dsDrawCylinderD
 #define dsDrawBox dsDrawBoxD
 #endif
-
+const int   FIELD_NUM = 5;
 static dWorldID world;                          //動力学計算用ワールド
 static dSpaceID space;                          //衝突検出用スペース
 static dGeomID  ground;
-static dJointID joint[3],fixed[2];
+static dJointID joint[3],fixed[FIELD_NUM];
 static dJointGroupID contactgroup;              //コンタクトグループ
 static int flag = 0;                            //
 dsFunctions fn;                                 //
 
+
+const dReal   FIELD_Z = 0.255;
+const dReal   WALL_W = 0.012;
+const dReal   WALL_H = FIELD_Z + 0.04;
 
 const dReal   WH_R = 0.04;                       //車輪の半径
 const dReal   WH_W = 0.01;                      //車輪の幅
@@ -27,13 +31,16 @@ dReal BASE_M = 9.4;                             //台車の質量
 dReal BASE_S[3] = {0.3,0.2,0.1};                //台車のサイズ
 
 
-dReal FIELD_S[2][3] = {
+dReal FIELD_S[FIELD_NUM][3] = {
 
-                        {0.5, 0.5024, 0.255},
-                        {0.01, 0.5, 0.255}
+                        {0.5, 0.5024, FIELD_Z},//初期位置の白い部分
+                        {0.02, 0.5, FIELD_Z},//初期位置の黒線
+                        {WALL_W, 0.5, WALL_H},//初期位置の後ろの壁
+                        {0.5 + WALL_W/2, WALL_W, WALL_H},//初期位置の左の壁
+                        {0.5 + WALL_W/2, WALL_W, WALL_H}
 
                         };
-dReal FIELD_M[2] = {0.01, 20};
+dReal FIELD_M[FIELD_NUM] = {0.01, 5 , 1, 1, 1};
 
 
 
@@ -41,9 +48,12 @@ dReal v_r = 1.0;
 dReal v_l = 0.0;
 
 //初期位置
-dReal FIELD_POSITION[2][3] = {
-                            {FIELD_S[0][0]/2 + 2.0 ,0.0 ,FIELD_S[0][2]/2 + 0.1},
-                            {FIELD_S[0][0] + 2.0 + FIELD_S[1][0]/2,0.0 ,FIELD_S[0][2]/2 + 0.1}
+dReal FIELD_POSITION[FIELD_NUM][3] = {
+                                {FIELD_S[0][0]/2 + 2.0 ,0.0 ,FIELD_S[0][2]/2},//位置　初期位置の白い部分　
+                                {FIELD_S[0][0] + 2.0 + FIELD_S[1][0]/2,0.0 ,FIELD_S[0][2]/2},//位置　初期位置の白い部分の前の黒線
+                                {2.0 - FIELD_S[2][0]/2, 0.0, WALL_H/2},//初期位置の後ろの壁
+                                {FIELD_S[0][0]/2 + 2.0, FIELD_S[0][1]/2 + WALL_W/2, WALL_H/2 },
+                                {FIELD_S[0][0]/2 + 2.0, -(FIELD_S[0][1]/2 + WALL_W/2), WALL_H/2 }
                             };
 dReal BASE_POSITION[3] = {FIELD_POSITION[0][0],0.0,FIELD_S[0][2] + BASE_S[2]/2 + WH_R/3 + 0.2};
 dReal WHEEL1_POSITION[3] = {BASE_POSITION[0] + BASE_S[0]/3, BASE_S[1]/2 + WH_W/2, FIELD_S[0][2] + WH_R/2 + 0.2};
@@ -59,7 +69,7 @@ typedef struct {                                // MyObject 構造体
   dGeomID geom;                                 // ジオメトリのID番号（衝突検出用計算）
 } MyObject;
 
-MyObject wheel[3],base,field[2];
+MyObject wheel[3],base,field[FIELD_NUM];
 
 
 
@@ -132,6 +142,13 @@ static void simLoop (int pause)
   dsDrawBox(dBodyGetPosition(field[0].body),dBodyGetRotation(field[0].body),FIELD_S[0]);
   dsSetColor(0.0, 0.0, 0.0);
   dsDrawBox(dBodyGetPosition(field[1].body),dBodyGetRotation(field[1].body),FIELD_S[1]);
+  dsSetColor(1.0, 1.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[2].body),dBodyGetRotation(field[2].body),FIELD_S[2]);
+  dsSetColor(1.0, 1.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[3].body),dBodyGetRotation(field[3].body),FIELD_S[3]);
+  dsSetColor(1.0, 1.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[4].body),dBodyGetRotation(field[4].body),FIELD_S[4]);
+
 
 }
 
@@ -220,14 +237,12 @@ int main (int argc, char *argv[])
   dJointSetHingeAnchor(joint[1], JOINT2_POSITION[0], JOINT2_POSITION[1], JOINT2_POSITION[2]);
   dJointSetHingeAnchor(joint[2], JOINT3_POSITION[0], JOINT3_POSITION[1], JOINT3_POSITION[2]);
 
-  //field  fix
-    fixed[i] = dJointCreateFixed(world, 0);
-  dJointAttach(fixed[i],NULL,field[i].body);
-  dJointSetFixed(fixed[i])
+
+
 
 
   //フィールド
-    for(int i=0;i<2;i++){
+    for(int i=0;i<FIELD_NUM;i++){
         field[i].body = dBodyCreate(world);                                       // ワールドにボディを生成
         dMassSetZero(&mass);                                                  // 質量パラメータの初期化
         dMassSetBoxTotal(&mass, FIELD_M[i], FIELD_S[i][0], FIELD_S[i][1], FIELD_S[i][2]);     // 質量パラメータの計算
@@ -236,6 +251,14 @@ int main (int argc, char *argv[])
         dGeomSetBody(field[i].geom, field[i].body);                                   // ジオメトリとボディの関連付け
         dBodySetPosition(field[i].body,FIELD_POSITION[i][0], FIELD_POSITION[i][1], FIELD_POSITION[i][2]);               //　ボディの初期位置の設定
     };
+
+    //field  fix
+  for(int i=0;i<FIELD_NUM;i++){
+    fixed[i] = dJointCreateFixed(world, 0);//※注意　field生成後に書かないと固定できない
+    dJointAttach(fixed[i],field[i].body, 0);
+    dJointSetFixed(fixed[i]);
+  };
+
 
   dsSimulationLoop (argc,argv,352,288,&fn);
 
