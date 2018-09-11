@@ -7,7 +7,8 @@
 #define dsDrawCylinder dsDrawCylinderD
 #define dsDrawBox dsDrawBoxD
 #endif
-const int   FIELD_NUM = 5;
+const int   FIELD_NUM = 59;
+
 static dWorldID world;                          //動力学計算用ワールド
 static dSpaceID space;                          //衝突検出用スペース
 static dGeomID  ground;
@@ -20,6 +21,7 @@ dsFunctions fn;                                 //
 const dReal   FIELD_Z = 0.255;
 const dReal   WALL_W = 0.012;
 const dReal   WALL_H = FIELD_Z + 0.04;
+const dReal   START[3] = {2,0,0.1};
 
 const dReal   WH_R = 0.04;                       //車輪の半径
 const dReal   WH_W = 0.01;                      //車輪の幅
@@ -31,29 +33,184 @@ dReal BASE_M = 9.4;                             //台車の質量
 dReal BASE_S[3] = {0.3,0.2,0.1};                //台車のサイズ
 
 
-dReal FIELD_S[FIELD_NUM][3] = {
+dReal FIELD_S[FIELD_NUM][3] = {//追加するとこ
 
-                        {0.5, 0.5024, FIELD_Z},//初期位置の白い部分
-                        {0.02, 0.5, FIELD_Z},//初期位置の黒線
-                        {WALL_W, 0.5, WALL_H},//初期位置の後ろの壁
-                        {0.5 + WALL_W/2, WALL_W, WALL_H},//初期位置の左の壁
-                        {0.5 + WALL_W/2, WALL_W, WALL_H}
+                        {0.480, 0.500,  0.255},//1
+                        {0.020, 0.500,  0.255},
+                        {0.012, 0.500,  0.295},
+                        {0.612, 0.014,  0.295},
+                        {0.512, 0.012,  0.295},
+
+                        {0.100, 0.500,  0.255},//6
+                        {0.300, 0.050,  0.255},
+                        {0.300, 0.020,  0.255},
+                        {1.700, 0.098,  0.255},
+                        {0.140, 0.300,  0.255},
+
+                        {0.020, 0.300,  0.255},//11
+                        {0.630, 0.140,  0.255},
+                        {0.630, 0.020,  0.255},
+                        {0.630, 0.140,  0.255},
+                        {0.020, 0.300,  0.255},
+
+                        {0.350, 0.014,  0.295},//16
+                        {0.350, 0.060,  0.255},
+                        {0.300, 0.054,  0.255},
+                        {0.300, 0.020,  0.255},
+                        {0.350, 0.060,  0.255},
+
+                        {0.350, 0.014,  0.295},//21
+                        {0.300, 0.054,  0.255},
+                        {0.300, 0.020,  0.255},
+                        {0.890, 0.140,  0.255},
+                        {0.100, 0.060,  0.255},
+
+                        {0.100, 0.014,  0.295},//26
+                        {0.014, 1.828,  0.295},
+                        {0.490, 0.020,  0.255},
+                        {0.490, 0.140,  0.255},
+                        {1.300, 0.150,  0.255},
+
+                        {0.100, 0.100,  0.255},//31
+                        {0.400, 0.590,  0.255},
+                        {0.014, 1.302,  0.295},
+                        {1.800, 0.014,  0.295},
+                        {0.900, 0.130,  0.295},
+
+                        {0.900, 0.020,  0.295},//36
+                        {0.900, 0.130,  0.295},
+                        {0.140, 0.140,  0.255},
+                        {0.020, 0.140,  0.255},
+                        {0.300, 0.020,  0.255},
+
+                        {0.240, 0.300,  0.255},//41
+                        {0.100, 0.020,  0.255},
+                        {0.100, 0.010,  0.255},
+                        {0.240, 1.190,  0.255},
+                        {0.020, 0.580,  0.255},
+
+                        {0.240, 0.580,  0.255},//46
+                        {0.900, 0.310,  0.255},
+                        {0.250, 0.450,  0.255},
+                        {0.090, 0.020,  0.255},
+                        {0.020, 0.300,  0.255},
+
+                        {0.090, 0.140,  0.255},//51
+                        {1.310, 0.310,  0.255},
+                        {1.230, 0.020,  0.255},
+                        {1.230, 0.140,  0.255},
+                        {1.230, 0.140,  0.255},
+
+                        {0.020, 0.300,  0.255},//56
+                        {0.040, 0.140,  0.255},
+                        {0.040, 0.140,  0.255},
+                        {0.040, 0.020,  0.255}
 
                         };
-dReal FIELD_M[FIELD_NUM] = {0.01, 5 , 1, 1, 1};
+dReal FIELD_M[FIELD_NUM] = {0.01, 5 , 1, 1, 1,
+                                        1,1,1,1,1,
+
+                                        1,1,1,1,1,
+                                        1,1,1,1,1,
+
+                                        1,1,1,1,1,
+                                        1,1,1,1,1,
+
+                                        1,1,1,1,1,
+                                        1,1,1,1,1,
+
+                                        1,1,1,1,1,
+                                        1,1,1,1,1,
+
+                                        1,1,1,1,1,
+                                        1,1,1,1
+
+                                        };//追加するとこ
 
 
 
 dReal v_r = 1.0;
 dReal v_l = 0.0;
 
-//初期位置
+//初期位置//追加するとこ
 dReal FIELD_POSITION[FIELD_NUM][3] = {
-                                {FIELD_S[0][0]/2 + 2.0 ,0.0 ,FIELD_S[0][2]/2},//位置　初期位置の白い部分　
-                                {FIELD_S[0][0] + 2.0 + FIELD_S[1][0]/2,0.0 ,FIELD_S[0][2]/2},//位置　初期位置の白い部分の前の黒線
-                                {2.0 - FIELD_S[2][0]/2, 0.0, WALL_H/2},//初期位置の後ろの壁
-                                {FIELD_S[0][0]/2 + 2.0, FIELD_S[0][1]/2 + WALL_W/2, WALL_H/2 },
-                                {FIELD_S[0][0]/2 + 2.0, -(FIELD_S[0][1]/2 + WALL_W/2), WALL_H/2 }
+                                {START[0], START[1] , START[2]},//1
+                                {START[0] + 0.250, START[1] , START[2]},
+                                {START[0] - 0.246, START[1] , START[2]},
+                                {START[0] + 0.054, START[1] + 0.257, START[2]},
+                                {START[0] + 0.004, START[1] - 0.256, START[2]},
+
+                                {START[0] + 0.310, START[1] , START[2]},
+                                {START[0] + 0.510, START[1] + 0.239, START[2]},
+                                {START[0] + 0.510, START[1] + 0.204, START[2]},
+                                {START[0] + 1.210, START[1] + 0.145, START[2]},
+                                {START[0] + 0.430, START[1] - 0.050, START[2]},
+
+
+                                {START[0] + 0.510, START[1] - 0.050, START[2]},//11
+                                {START[0] + 0.835, START[1] + 0.030, START[2]},
+                                {START[0] + 0.835, START[1] , START[2]},
+                                {START[0] + 0.835, START[1] - 0.130, START[2]},
+                                {START[0] + 1.160, START[1] , START[2]},
+
+                                {START[0] + 0.835, START[1] + 0.257, START[2]},
+                                {START[0] + 0.835, START[1] + 0.220, START[2]},
+                                {START[0] + 1.160, START[1] + 0.237, START[2]},
+                                {START[0] + 1.160, START[1] + 0.200, START[2]},
+                                {START[0] + 1.485, START[1] + 0.220, START[2]},
+
+
+                                {START[0] + 1.485, START[1] + 0.257, START[2]},//21
+                                {START[0] + 1.810, START[1] + 0.237, START[2]},
+                                {START[0] + 1.810, START[1] + 0.200, START[2]},
+                                {START[0] + 1.615, START[1] + 0.030, START[2]},
+                                {START[0] + 2.010, START[1] + 0.220, START[2]},
+
+                                {START[0] + 2.010, START[1] + 0.257, START[2]},
+                                {START[0] + 2.067, START[1] - 0.650, START[2]},
+                                {START[0] + 1.415, START[1] - 0.050, START[2]},
+                                {START[0] + 1.415, START[1] - 0.130, START[2]},
+                                {START[0] + 1.010, START[1] - 0.275, START[2]},
+
+
+                                {START[0] + 0.310, START[1] - 0.300, START[2]},//31
+                                {START[0] + 0.460, START[1] - 0.645, START[2]},
+                                {START[0] + 0.253, START[1] - 0.913, START[2]},
+                                {START[0] + 1.160, START[1] - 1.557, START[2]},
+                                {START[0] + 1.110, START[1] - 0.415, START[2]},
+
+                                {START[0] + 1.110, START[1] - 0.490, START[2]},//36
+                                {START[0] + 1.110, START[1] - 0.565, START[2]},
+                                {START[0] + 1.730, START[1] - 0.270, START[2]},
+                                {START[0] + 1.810, START[1] - 0.270, START[2]},
+                                {START[0] + 1.810, START[1] - 0.350, START[2]},
+
+
+                                {START[0] + 1.940, START[1] - 0.190, START[2]},//41
+                                {START[0] + 2.010, START[1] - 0.350, START[2]},
+                                {START[0] + 1.610, START[1] - 0.355, START[2]},
+                                {START[0] + 1.940, START[1] - 0.955, START[2]},
+                                {START[0] + 1.810, START[1] - 0.650, START[2]},
+
+                                {START[0] + 1.680, START[1] - 0.650, START[2]},
+                                {START[0] + 1.110, START[1] - 0.785, START[2]},
+                                {START[0] + 1.695, START[1] - 1.325, START[2]},
+                                {START[0] + 1.615, START[1] - 1.080, START[2]},
+                                {START[0] + 1.560, START[1] - 1.090, START[2]},
+
+
+                                {START[0] + 1.615, START[1] - 1.010, START[2]},//51
+                                {START[0] + 0.915, START[1] - 1.395, START[2]},
+                                {START[0] + 0.935, START[1] - 1.090, START[2]},
+                                {START[0] + 0.935, START[1] - 1.170, START[2]},
+                                {START[0] + 0.935, START[1] - 1.010, START[2]},
+
+                                {START[0] + 0.310, START[1] - 1.090, START[2]},
+                                {START[0] + 0.280, START[1] - 1.010, START[2]},
+                                {START[0] + 0.310, START[1] - 1.170, START[2]},
+                                {START[0] + 0.280, START[1] - 1090., START[2]}
+
+
                             };
 dReal BASE_POSITION[3] = {FIELD_POSITION[0][0],0.0,FIELD_S[0][2] + BASE_S[2]/2 + WH_R/3 + 0.2};
 dReal WHEEL1_POSITION[3] = {BASE_POSITION[0] + BASE_S[0]/3, BASE_S[1]/2 + WH_W/2, FIELD_S[0][2] + WH_R/2 + 0.2};
@@ -136,18 +293,70 @@ static void simLoop (int pause)
   dsSetColor(1.0, 0.0, 0.0);
   dsDrawCylinder(dBodyGetPosition(wheel[2].body),dBodyGetRotation(wheel[2].body),WH2_W,WH2_R);
 
-  //フィールド
+  //フィールド//追加する
 
   dsSetColor(1.2, 1.2, 1.2);
-  dsDrawBox(dBodyGetPosition(field[0].body),dBodyGetRotation(field[0].body),FIELD_S[0]);
+  dsDrawBox(dBodyGetPosition(field[0].body),dBodyGetRotation(field[0].body),FIELD_S[0]);//1しろいとこ
   dsSetColor(0.0, 0.0, 0.0);
-  dsDrawBox(dBodyGetPosition(field[1].body),dBodyGetRotation(field[1].body),FIELD_S[1]);
+  dsDrawBox(dBodyGetPosition(field[1].body),dBodyGetRotation(field[1].body),FIELD_S[1]);//2初期位置の黒線
   dsSetColor(1.0, 1.0, 0.0);
-  dsDrawBox(dBodyGetPosition(field[2].body),dBodyGetRotation(field[2].body),FIELD_S[2]);
+  dsDrawBox(dBodyGetPosition(field[2].body),dBodyGetRotation(field[2].body),FIELD_S[2]);//3後ろ壁
   dsSetColor(1.0, 1.0, 0.0);
-  dsDrawBox(dBodyGetPosition(field[3].body),dBodyGetRotation(field[3].body),FIELD_S[3]);
+  dsDrawBox(dBodyGetPosition(field[3].body),dBodyGetRotation(field[3].body),FIELD_S[3]);//4左壁
   dsSetColor(1.0, 1.0, 0.0);
-  dsDrawBox(dBodyGetPosition(field[4].body),dBodyGetRotation(field[4].body),FIELD_S[4]);
+  dsDrawBox(dBodyGetPosition(field[4].body),dBodyGetRotation(field[4].body),FIELD_S[4]);//5右壁
+
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[5].body),dBodyGetRotation(field[5].body),FIELD_S[5]);//6　２の前の白いとこ
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[6].body),dBodyGetRotation(field[6].body),FIELD_S[6]);
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[7].body),dBodyGetRotation(field[7].body),FIELD_S[7]);
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[8].body),dBodyGetRotation(field[8].body),FIELD_S[8]);
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[9].body),dBodyGetRotation(field[9].body),FIELD_S[9]);
+
+
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[10].body),dBodyGetRotation(field[10].body),FIELD_S[10]);//11
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[11].body),dBodyGetRotation(field[11].body),FIELD_S[11]);
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[12].body),dBodyGetRotation(field[12].body),FIELD_S[12]);
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[13].body),dBodyGetRotation(field[13].body),FIELD_S[13]);
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[14].body),dBodyGetRotation(field[14].body),FIELD_S[14]);
+
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[15].body),dBodyGetRotation(field[15].body),FIELD_S[15]);//16
+  dsSetColor(1.2, 1.2, 0.0);
+  dsDrawBox(dBodyGetPosition(field[16].body),dBodyGetRotation(field[16].body),FIELD_S[16]);
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[18].body),dBodyGetRotation(field[18].body),FIELD_S[18]);
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[19].body),dBodyGetRotation(field[19].body),FIELD_S[19]);
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[20].body),dBodyGetRotation(field[20].body),FIELD_S[20]);
+
+
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[10].body),dBodyGetRotation(field[10].body),FIELD_S[10]);//21
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[11].body),dBodyGetRotation(field[11].body),FIELD_S[11]);
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[12].body),dBodyGetRotation(field[12].body),FIELD_S[12]);
+  dsSetColor(1.2, 1.2, 1.2);
+  dsDrawBox(dBodyGetPosition(field[13].body),dBodyGetRotation(field[13].body),FIELD_S[13]);
+  dsSetColor(0.0, 0.0, 0.0);
+  dsDrawBox(dBodyGetPosition(field[14].body),dBodyGetRotation(field[14].body),FIELD_S[14]);
+
+
+
+
+
+
 
 
 }
@@ -253,11 +462,18 @@ int main (int argc, char *argv[])
     };
 
     //field  fix
-  for(int i=0;i<FIELD_NUM;i++){
-    fixed[i] = dJointCreateFixed(world, 0);//※注意　field生成後に書かないと固定できない
-    dJointAttach(fixed[i],field[i].body, 0);
-    dJointSetFixed(fixed[i]);
-  };
+
+
+    for (int  i = 0; i < FIELD_NUM; i++){
+        fixed[i] = dJointCreateFixed(world, 0);//※注意　field生成後に書かないと固定できない
+        dJointAttach(fixed[i],field[i].body, 0);
+        dJointSetFixed(fixed[i]);
+    };
+
+
+
+
+
 
 
   dsSimulationLoop (argc,argv,352,288,&fn);
